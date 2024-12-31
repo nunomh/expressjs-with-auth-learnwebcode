@@ -1,0 +1,12 @@
+{
+  "name": "expressjs-with-auth-learnwebcode",
+  "version": "1.0.0",
+  "description": "Based on the LearnWebCode youtube video https://www.youtube.com/watch?v=1oTuMPIwHmk",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
