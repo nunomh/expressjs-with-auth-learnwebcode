@@ -14,3 +14,7 @@ benchmarks/graphs
 
 # ignore additional files using core.excludesFile
 # https://git-scm.com/docs/gitignore
+.env
+ourApp.db
+ourApp.db-shm
+ourApp.db-wal
