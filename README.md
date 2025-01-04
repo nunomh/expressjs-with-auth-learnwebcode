@@ -11,6 +11,7 @@ Based on the LearnWebCode youtube video https://www.youtube.com/watch?v=1oTuMPIw
 -   bcrypt
 -   jsonwebtoken
 -   dotenv
+-   cookie-parser
 
 ## Project installation and running
 

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
 const express = require('express');
 const db = require('better-sqlite3')('ourApp.db');
 db.pragma('journal_mode = WAL');
@@ -27,18 +28,38 @@ const app = express();
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: false })); // middleware for parsing urlencoded bodies of incoming requests (POST, PUT...)
 app.use(express.static('public'));
+app.use(cookieParser());
 
+// middleware for cookie validation
 app.use((req, res, next) => {
     res.locals.errors = [];
+
+    try {
+        const decoded = jwt.verify(req.cookies.ourSimpleApp, process.env.JWTSECRET);
+        req.user = decoded;
+    } catch (error) {
+        req.user = false;
+    }
+
+    res.locals.user = req.user;
+
     next();
 });
 
 app.get('/', (req, res) => {
+    if (req.user) {
+        return res.render('dashboard');
+    }
     res.render('homepage');
 });
 
 app.get('/login', (req, res) => {
     res.render('login');
+});
+
+app.get('/logout', (req, res) => {
+    res.clearCookie('ourSimpleApp');
+    res.redirect('/');
 });
 
 app.post('/register', (req, res) => {
