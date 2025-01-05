@@ -62,6 +62,50 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
+app.post('/login', (req, res) => {
+    let errors = [];
+
+    if (typeof req.body.username !== 'string') req.body.username = '';
+    if (typeof req.body.password !== 'string') req.body.password = '';
+
+    if (req.body.username.trim() == '') errors = ['Invalid username / password'];
+    if (req.body.password == '') errors = ['Invalid username / password'];
+
+    if (errors.length) {
+        return res.render('login', { errors });
+    }
+
+    const statement = db.prepare('SELECT * FROM users WHERE username = ?');
+    const user = statement.get(req.body.username);
+
+    if (!user) {
+        errors = ['Invalid username / password'];
+        return res.render('login', { errors });
+    }
+
+    const matchOrNot = bcrypt.compareSync(req.body.password, user.password);
+    if (!matchOrNot) {
+        errors = ['Invalid username / password'];
+        return res.render('login', { errors });
+    }
+
+    // Set cookie
+    const ourTokenValue = jwt.sign(
+        { exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, userid: user.id, username: user.username },
+        // 7 days, exp is defined as the number of seconds (not milliseconds)
+        process.env.JWTSECRET
+    );
+
+    res.cookie('ourSimpleApp', ourTokenValue, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days, in milliseconds
+    });
+
+    res.redirect('/');
+});
+
 app.post('/register', (req, res) => {
     const errors = [];
 
@@ -76,6 +120,11 @@ app.post('/register', (req, res) => {
     if (req.body.username && req.body.username.length > 30) errors.push('Username must be at most 30 characters long');
     if (req.body.username && req.body.username.match(/[^a-zA-Z0-9]/))
         errors.push('Username must contain only letters and numbers');
+
+    // check if the username already exists
+    const statement = db.prepare('SELECT * FROM users WHERE username = ?');
+    const user = statement.get(req.body.username);
+    if (user) errors.push('Username already exists');
 
     if (!req.body.password) errors.push('Password is required');
     if (req.body.password && req.body.password.length < 12) errors.push('Password must be at least 12 characters long');
@@ -109,7 +158,7 @@ app.post('/register', (req, res) => {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days, in milliseconds
     });
 
-    res.send('Thanks for signing up!');
+    res.redirect('/');
 });
 
 app.listen(3001);
